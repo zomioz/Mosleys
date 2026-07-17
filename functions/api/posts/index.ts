@@ -1,4 +1,4 @@
-import { json } from '../lib/http'
+import { json } from '../../lib/http'
 
 export async function onRequestGet({ env }: { env: any }) {
   const { results } = await env.DB.prepare(
