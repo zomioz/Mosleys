@@ -2,8 +2,6 @@ import { NavLink } from 'react-router-dom'
 
 const links = [
   { to: '/', label: 'Accueil' },
-  { to: '/admin', label: 'Admin' },
-  { to: '/contact', label: 'Contact' },
 ]
 
 function Navbar() {

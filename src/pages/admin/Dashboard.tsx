@@ -29,6 +29,7 @@ function Dashboard() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [previewSrc, setPreviewSrc] = useState('')
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -51,6 +52,19 @@ function Dashboard() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Impossible de charger les posts')
     }
+  }
+
+  function resetForm() {
+    setEditingId(null)
+    setForm({
+      title: '',
+      slug: '',
+      excerpt: '',
+      content: '',
+      status: 'draft',
+      coverImageKey: '',
+    })
+    setPreviewSrc('')
   }
 
   useEffect(() => {
@@ -146,26 +160,38 @@ function Dashboard() {
     setError('')
 
     try {
-      await apiJson('/api/admin/posts', {
-        method: 'POST',
-        body: JSON.stringify(form),
-      })
+      if (editingId) {
+        await apiJson(`/api/admin/posts/${editingId}`, {
+          method: 'PUT',
+          body: JSON.stringify(form),
+        })
+      } else {
+        await apiJson('/api/admin/posts', {
+          method: 'POST',
+          body: JSON.stringify(form),
+        })
+      }
 
-      setForm({
-        title: '',
-        slug: '',
-        excerpt: '',
-        content: '',
-        status: 'draft',
-        coverImageKey: '',
-      })
-      setPreviewSrc('')
+      resetForm()
       await loadPosts()
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Création impossible')
+      setError(error instanceof Error ? error.message : 'Enregistrement impossible')
     } finally {
       setSaving(false)
     }
+  }
+
+  function handleEdit(post: Post) {
+    setEditingId(post.id)
+    setForm({
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      status: post.status,
+      coverImageKey: post.cover_image_key || '',
+    })
+    setPreviewSrc(post.cover_image_key ? `/api/media/${post.cover_image_key}` : '')
   }
 
   async function handleDelete(id: number) {
@@ -200,6 +226,9 @@ function Dashboard() {
           <button className="button button-primary" type="button" onClick={handleLogout}>
             Se déconnecter
           </button>
+          <button className="button button-secondary" type="button" onClick={resetForm}>
+            Nouveau post
+          </button>
           <Link className="button button-secondary" to="/">
             Voir le site
           </Link>
@@ -224,7 +253,7 @@ function Dashboard() {
           <div className="section-header">
             <div>
               <span className="eyebrow">Créer</span>
-              <h2>Nouveau post</h2>
+              <h2>{editingId ? 'Modifier le post' : 'Nouveau post'}</h2>
             </div>
           </div>
 
@@ -272,7 +301,7 @@ function Dashboard() {
             {error ? <p className="form-error form-field-full">{error}</p> : null}
 
             <button className="button button-primary form-submit form-field-full" type="submit" disabled={saving}>
-              {saving ? 'Création...' : 'Créer le post'}
+              {saving ? 'Enregistrement...' : editingId ? 'Mettre à jour' : 'Créer le post'}
             </button>
           </form>
         </section>
@@ -297,6 +326,9 @@ function Dashboard() {
                   <h3>{post.title}</h3>
                   <p>{post.excerpt || post.content.slice(0, 120)}</p>
                 </div>
+                <button className="button button-secondary delete-button" type="button" onClick={() => handleEdit(post)}>
+                  Modifier
+                </button>
                 <button className="button button-secondary delete-button" type="button" onClick={() => handleDelete(post.id)}>
                   Supprimer
                 </button>
