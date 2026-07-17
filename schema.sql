@@ -1,0 +1,31 @@
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'admin',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  excerpt TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  cover_image_key TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE media (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER,
+  r2_key TEXT NOT NULL UNIQUE,
+  public_url TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_posts_status_created_at ON posts(status, created_at DESC);
+CREATE INDEX idx_posts_slug ON posts(slug);
