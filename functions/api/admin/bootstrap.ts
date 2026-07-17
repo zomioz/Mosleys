@@ -1,5 +1,5 @@
-import { createSession, createSessionCookie, hashPassword } from '../../../lib/auth'
-import { json } from '../../../lib/http'
+import { createSession, createSessionCookie, hashPassword } from '../../lib/auth'
+import { json } from '../../lib/http'
 
 export async function onRequestPost({ request, env }: { request: Request; env: any }) {
   const payload = await request.json().catch(() => null)

@@ -1,5 +1,5 @@
-import { json } from '../../../../lib/http'
-import { requireAdmin } from '../../../../lib/auth'
+import { json } from '../../../lib/http'
+import { requireAdmin } from '../../../lib/auth'
 
 export async function onRequestDelete({ request, env, params }: { request: Request; env: any; params: any }) {
   const admin = await requireAdmin(request, env)

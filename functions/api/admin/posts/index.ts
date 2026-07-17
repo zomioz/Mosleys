@@ -1,6 +1,6 @@
-import { json } from '../../../../lib/http'
-import { makeUniqueSlug } from '../../../../lib/posts'
-import { requireAdmin } from '../../../../lib/auth'
+import { json } from '../../../lib/http'
+import { makeUniqueSlug } from '../../../lib/posts'
+import { requireAdmin } from '../../../lib/auth'
 
 export async function onRequestGet({ request, env }: { request: Request; env: any }) {
   const admin = await requireAdmin(request, env)

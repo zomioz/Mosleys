@@ -1,4 +1,4 @@
-import { json } from '../../../lib/http'
+import { json } from '../../lib/http'
 
 export async function onRequestGet({ env, params }: { env: any; params: any }) {
   const slug = String(params.slug || '')

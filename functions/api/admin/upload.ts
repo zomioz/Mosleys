@@ -1,5 +1,5 @@
-import { json } from '../../../lib/http'
-import { requireAdmin } from '../../../lib/auth'
+import { json } from '../../lib/http'
+import { requireAdmin } from '../../lib/auth'
 
 function sanitizeFileName(fileName: string) {
   return fileName

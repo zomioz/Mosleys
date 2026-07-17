@@ -1,5 +1,5 @@
-import { json } from '../../../lib/http'
-import { requireAdmin } from '../../../lib/auth'
+import { json } from '../../lib/http'
+import { requireAdmin } from '../../lib/auth'
 
 export async function onRequestGet({ request, env }: { request: Request; env: any }) {
   const user = await requireAdmin(request, env)
