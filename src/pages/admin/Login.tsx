@@ -32,28 +32,24 @@ function Login() {
           }
         }
 
-        if (meResponse.status !== 401 && !meResponse.ok) {
-          throw new Error(`HTTP ${meResponse.status}`)
-        }
-
         const initResponse = await fetch('/api/admin/init', { credentials: 'include' })
 
-        if (!initResponse.ok) {
-          throw new Error(`HTTP ${initResponse.status}`)
-        }
+        if (initResponse.ok) {
+          const initData = (await initResponse.json()) as AdminInit
 
-        const initData = (await initResponse.json()) as AdminInit
-
-        if (mounted) {
-          setNeedsBootstrap(initData.needsBootstrap)
-          setError('')
+          if (mounted) {
+            setNeedsBootstrap(initData.needsBootstrap)
+          }
+        } else if (mounted) {
+          setNeedsBootstrap(false)
         }
       } catch (error) {
         if (mounted) {
-          setError(error instanceof Error ? `API admin indisponible: ${error.message}` : 'Erreur inconnue')
+          setNeedsBootstrap(false)
         }
       } finally {
         if (mounted) {
+          setError('')
           setLoading(false)
         }
       }
