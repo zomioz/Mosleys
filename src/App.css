@@ -9,6 +9,11 @@
   padding: 28px clamp(16px, 3vw, 40px) 48px;
 }
 
+.page {
+  display: grid;
+  gap: 24px;
+}
+
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -183,6 +188,12 @@
   background: color-mix(in srgb, var(--bg) 88%, var(--social-bg));
 }
 
+.button:disabled,
+.form-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .grid {
   display: grid;
   gap: 18px;
@@ -200,6 +211,12 @@
   padding: 24px;
 }
 
+.section-block,
+.auth-panel,
+.admin-page .panel {
+  scroll-margin-top: 96px;
+}
+
 .accent-panel {
   background: linear-gradient(180deg, var(--accent-bg), color-mix(in srgb, var(--bg) 90%, transparent));
 }
@@ -215,6 +232,192 @@
   gap: 12px;
 }
 
+.hero-card-home,
+.admin-hero {
+  min-height: 240px;
+}
+
+.page-home .section-block {
+  padding: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.posts-grid,
+.admin-posts-list {
+  display: grid;
+  gap: 16px;
+}
+
+.post-card,
+.admin-post-item {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+}
+
+.post-card-content,
+.admin-post-content {
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.post-card h3,
+.admin-post-content h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.post-cover,
+.post-article-cover,
+.admin-post-thumb,
+.upload-preview {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.post-cover,
+.admin-post-thumb {
+  height: 220px;
+}
+
+.post-article-cover {
+  max-height: 360px;
+  border-radius: 18px;
+  margin-bottom: 20px;
+}
+
+.post-meta {
+  color: var(--text);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-page,
+.page-post {
+  justify-items: center;
+}
+
+.auth-page .panel,
+.page-post .panel {
+  width: min(760px, 100%);
+}
+
+.auth-panel,
+.post-article {
+  padding: 28px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-field span {
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 92%, var(--social-bg));
+  color: var(--text-h);
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  outline: 2px solid var(--accent-border);
+  border-color: var(--accent-border);
+}
+
+.form-field-full {
+  grid-column: 1 / -1;
+}
+
+.form-error {
+  color: #d11a2a;
+  font-weight: 600;
+}
+
+.auth-links,
+.admin-hero .hero-actions {
+  margin-top: 20px;
+}
+
+.upload-field {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px dashed var(--border);
+}
+
+.upload-preview {
+  border-radius: 16px;
+  max-height: 260px;
+}
+
+.admin-post-item {
+  padding: 0;
+  overflow: hidden;
+}
+
+.delete-button {
+  margin: 0 18px 18px;
+  justify-self: start;
+}
+
+.back-link {
+  width: fit-content;
+}
+
+.post-article {
+  display: grid;
+  gap: 16px;
+}
+
+.post-excerpt {
+  font-size: 1.08rem;
+  color: var(--text);
+}
+
+.post-content {
+  display: grid;
+  gap: 14px;
+  line-height: 1.8;
+}
+
+.dashboard-stats .stat-card h2 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  margin: 0;
+}
+
+.stat-card p {
+  color: var(--text);
+}
+
+.admin-grid {
+  align-items: start;
+}
+
 @media (max-width: 900px) {
   .navbar {
     flex-direction: column;
@@ -228,5 +431,15 @@
   .two-columns,
   .three-columns {
     grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+  }
+
+  .auth-panel,
+  .post-article,
+  .panel {
+    padding: 20px;
   }
 }
