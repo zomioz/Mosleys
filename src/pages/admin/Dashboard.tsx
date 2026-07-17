@@ -58,7 +58,23 @@ function Dashboard() {
 
     async function bootstrap() {
       try {
-        const me = await apiJson<{ authenticated: true; user: User }>('/api/admin/me')
+        const meResponse = await fetch('/api/admin/me', { credentials: 'include' })
+
+        if (meResponse.status === 401) {
+          navigate('/admin/login', { replace: true })
+          return
+        }
+
+        if (!meResponse.ok) {
+          throw new Error(`HTTP ${meResponse.status}`)
+        }
+
+        const me = (await meResponse.json()) as { authenticated?: boolean; user?: User }
+
+        if (!me.authenticated || !me.user) {
+          navigate('/admin/login', { replace: true })
+          return
+        }
 
         if (mounted) {
           setUser(me.user)
@@ -68,7 +84,7 @@ function Dashboard() {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Erreur inconnue'
 
-        if (message.includes('Unauthorized')) {
+        if (message.includes('Unauthorized') || message.includes('HTTP 401')) {
           navigate('/admin/login', { replace: true })
           return
         }

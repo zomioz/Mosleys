@@ -21,27 +21,36 @@ function Login() {
 
     async function loadInit() {
       try {
-        const me = await apiJson<{ authenticated: boolean }>('/api/admin/me')
+        const meResponse = await fetch('/api/admin/me', { credentials: 'include' })
 
-        if (me.authenticated) {
-          navigate('/admin', { replace: true })
-          return
+        if (meResponse.ok) {
+          const me = (await meResponse.json()) as { authenticated?: boolean }
+
+          if (me.authenticated) {
+            navigate('/admin', { replace: true })
+            return
+          }
         }
 
-        const data = await apiJson<AdminInit>('/api/admin/init')
+        if (meResponse.status !== 401 && !meResponse.ok) {
+          throw new Error(`HTTP ${meResponse.status}`)
+        }
+
+        const initResponse = await fetch('/api/admin/init', { credentials: 'include' })
+
+        if (!initResponse.ok) {
+          throw new Error(`HTTP ${initResponse.status}`)
+        }
+
+        const initData = (await initResponse.json()) as AdminInit
 
         if (mounted) {
-          setNeedsBootstrap(data.needsBootstrap)
+          setNeedsBootstrap(initData.needsBootstrap)
+          setError('')
         }
       } catch (error) {
         if (mounted) {
-          setError(
-            error instanceof Error
-              ? error.message.includes('Unauthorized')
-                ? ''
-                : `API admin indisponible: ${error.message}`
-              : 'Erreur inconnue',
-          )
+          setError(error instanceof Error ? `API admin indisponible: ${error.message}` : 'Erreur inconnue')
         }
       } finally {
         if (mounted) {
