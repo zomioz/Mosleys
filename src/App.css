@@ -446,7 +446,7 @@
 
 .articles-grid {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -459,6 +459,7 @@
   background: color-mix(in srgb, var(--bg) 96%, transparent);
   cursor: pointer;
   box-shadow: var(--shadow);
+  align-content: start;
 }
 
 .article-card-active {
@@ -466,21 +467,31 @@
 }
 
 .article-card-content {
-  padding: 18px;
+  padding: 12px 14px 14px;
   display: grid;
-  gap: 10px;
+  gap: 6px;
+}
+
+.article-card-content h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .article-media {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  height: 150px;
   background: var(--social-bg);
 }
 
@@ -504,6 +515,7 @@
 
 .article-media-detail {
   border-radius: 20px;
+  height: min(56vh, 460px);
 }
 
 .carousel-arrow {
@@ -567,7 +579,7 @@
 
 .article-detail-copy {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .article-detail-header {
@@ -579,9 +591,55 @@
 
 .article-price {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--text-h);
+}
+
+.article-snippet {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.article-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 15, 24, 0.52);
+  backdrop-filter: blur(3px);
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.article-modal {
+  width: min(920px, 100%);
+  max-height: min(88vh, 920px);
+  overflow: auto;
+  position: relative;
+  display: grid;
+  gap: 14px;
+}
+
+.article-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  background: rgba(18, 15, 24, 0.6);
+  color: #fff;
+  z-index: 2;
 }
 
 .upload-previews {
@@ -617,6 +675,14 @@
 @media (max-width: 700px) {
   .carousel-arrow {
     opacity: 1;
+  }
+
+  .article-media {
+    height: 130px;
+  }
+
+  .article-media-detail {
+    height: 240px;
   }
 }
 

@@ -28,10 +28,7 @@ function Articles() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [imageIndexes, setImageIndexes] = useState<Record<number, number>>({})
 
-  const expandedPost = useMemo(
-    () => posts.find((post) => post.id === expandedId) || posts[0] || null,
-    [expandedId, posts],
-  )
+  const expandedPost = useMemo(() => posts.find((post) => post.id === expandedId) || null, [expandedId, posts])
 
   function getImages(post: PostSummary) {
     const images = post.gallery_image_keys.length > 0 ? post.gallery_image_keys : post.cover_image_key ? [post.cover_image_key] : []
@@ -141,32 +138,6 @@ function Articles() {
         </p>
       </div>
 
-      {expandedPost ? (
-        <article className="panel article-detail" aria-label="Aperçu détaillé">
-          <div className="article-detail-gallery">{renderCarousel(expandedPost, 'detail')}</div>
-
-          <div className="article-detail-copy">
-            <div className="article-detail-header">
-              <div>
-                <span className="eyebrow">Vue agrandie</span>
-                <h2>{expandedPost.title}</h2>
-              </div>
-              <button className="button button-secondary" type="button" onClick={() => setExpandedId(null)}>
-                Fermer
-              </button>
-            </div>
-
-            <p className="article-price">{formatPrice(expandedPost.price_cents)}</p>
-            <p className="article-excerpt">{expandedPost.excerpt}</p>
-            <div className="article-content">
-              {expandedPost.content.split('\n').map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
-          </div>
-        </article>
-      ) : null}
-
       <section className="panel">
         <div className="section-header">
           <div>
@@ -182,7 +153,7 @@ function Articles() {
           {posts.map((post) => (
             <article
               key={post.id}
-              className={`article-card ${expandedPost?.id === post.id ? 'article-card-active' : ''}`}
+              className={`article-card ${expandedId === post.id ? 'article-card-active' : ''}`}
               onClick={() => setExpandedId(post.id)}
               role="button"
               tabIndex={0}
@@ -199,7 +170,7 @@ function Articles() {
                 <p className="post-meta">{new Date(post.created_at).toLocaleDateString('fr-FR')}</p>
                 <h3>{post.title}</h3>
                 <p className="article-price">{formatPrice(post.price_cents)}</p>
-                <p>{post.excerpt || post.content.slice(0, 140)}</p>
+                <p className="article-snippet">{post.excerpt || post.content.slice(0, 110)}</p>
                 <div className="article-card-actions">
                   <button className="button button-secondary" type="button">
                     Ouvrir
@@ -213,6 +184,35 @@ function Articles() {
           ))}
         </div>
       </section>
+
+      {expandedPost ? (
+        <div className="article-modal-backdrop" role="dialog" aria-modal="true" aria-label={`Détail ${expandedPost.title}`} onClick={() => setExpandedId(null)}>
+          <article className="panel article-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="article-modal-close" type="button" aria-label="Fermer" onClick={() => setExpandedId(null)}>
+              ×
+            </button>
+
+            <div className="article-detail-gallery">{renderCarousel(expandedPost, 'detail')}</div>
+
+            <div className="article-detail-copy">
+              <div className="article-detail-header">
+                <div>
+                  <span className="eyebrow">Vue agrandie</span>
+                  <h2>{expandedPost.title}</h2>
+                </div>
+              </div>
+
+              <p className="article-price">{formatPrice(expandedPost.price_cents)}</p>
+              <p className="article-excerpt">{expandedPost.excerpt}</p>
+              <div className="article-content">
+                {expandedPost.content.split('\n').map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            </div>
+          </article>
+        </div>
+      ) : null}
     </section>
   )
 }

@@ -56,11 +56,17 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
     const normalizedGallery = galleryImageKeys.length > 0 ? galleryImageKeys : coverImageKey ? [coverImageKey] : []
     const normalizedCover = coverImageKey || normalizedGallery[0] || null
 
+    const existingSameKey = await env.DB.prepare('SELECT id FROM posts WHERE article_key = ? LIMIT 1')
+      .bind(articleKey)
+      .first<{ id: number }>()
+
+    const effectiveArticleKey = existingSameKey ? makeArticleKey() : articleKey
+
     const result = await env.DB.prepare(
       `INSERT INTO posts (title, slug, article_key, price_cents, excerpt, content, cover_image_key, gallery_image_keys, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-      .bind(title, slug, articleKey, priceCents, excerpt, content, normalizedCover, JSON.stringify(normalizedGallery), status)
+      .bind(title, slug, effectiveArticleKey, priceCents, excerpt, content, normalizedCover, JSON.stringify(normalizedGallery), status)
       .run()
 
     const postId = result.meta.last_row_id
@@ -70,7 +76,7 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
       const placeholders = imageKeys.map(() => '?').join(', ')
 
       await env.DB.prepare(`UPDATE media SET post_id = ? WHERE article_key = ? OR r2_key IN (${placeholders})`)
-        .bind(postId, articleKey, ...imageKeys)
+        .bind(postId, effectiveArticleKey, ...imageKeys)
         .run()
     }
 
@@ -80,7 +86,7 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
         id: postId,
         title,
         slug,
-        article_key: articleKey,
+        article_key: effectiveArticleKey,
         price_cents: priceCents,
         excerpt,
         content,
