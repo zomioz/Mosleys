@@ -9,7 +9,7 @@ function createArticleKey() {
 function formatPrice(priceCents: number) {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'USD',
   }).format(priceCents / 100)
 }
 
@@ -50,7 +50,6 @@ function Dashboard() {
     price: '',
     excerpt: '',
     content: '',
-    status: 'draft' as 'draft' | 'published',
     coverImageKey: '',
     galleryImageKeys: [] as string[],
     articleKey: createArticleKey(),
@@ -79,7 +78,6 @@ function Dashboard() {
       price: '',
       excerpt: '',
       content: '',
-      status: 'draft',
       coverImageKey: '',
       galleryImageKeys: [],
       articleKey: createArticleKey(),
@@ -240,7 +238,6 @@ function Dashboard() {
       price: String(post.price_cents / 100),
       excerpt: post.excerpt,
       content: post.content,
-      status: post.status,
       coverImageKey: post.cover_image_key || '',
       galleryImageKeys: post.gallery_image_keys.length > 0 ? post.gallery_image_keys : post.cover_image_key ? [post.cover_image_key] : [],
       articleKey: post.article_key,
@@ -333,10 +330,11 @@ function Dashboard() {
             <label className="form-field">
               <span>Slug optionnel</span>
               <input value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} />
+              <small>Optionnel: si tu le remplis, il sert d&apos;URL personnalisée. Sinon, il est généré depuis le titre.</small>
             </label>
 
             <label className="form-field">
-              <span>Prix en euros</span>
+              <span>Prix en dollars</span>
               <input
                 value={form.price}
                 onChange={(event) => setForm({ ...form, price: event.target.value })}
@@ -349,20 +347,13 @@ function Dashboard() {
 
             <label className="form-field form-field-full">
               <span>Extrait</span>
+              <small>Résumé court affiché sur les cartes et avant le contenu complet.</small>
               <textarea value={form.excerpt} onChange={(event) => setForm({ ...form, excerpt: event.target.value })} rows={3} />
             </label>
 
             <label className="form-field form-field-full">
               <span>Contenu</span>
               <textarea value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} rows={10} required />
-            </label>
-
-            <label className="form-field">
-              <span>Statut</span>
-              <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as 'draft' | 'published' })}>
-                <option value="draft">Brouillon</option>
-                <option value="published">Publié</option>
-              </select>
             </label>
 
             <label className="form-field">
@@ -415,9 +406,7 @@ function Dashboard() {
               <article key={post.id} className="admin-post-item">
                 {post.cover_image_key ? <img className="admin-post-thumb" src={`/api/media/${post.cover_image_key}`} alt={post.title} /> : null}
                 <div className="admin-post-content">
-                  <p className="post-meta">
-                    {post.status} - {post.slug}
-                  </p>
+                  <p className="post-meta">{post.slug}</p>
                   <h3>{post.title}</h3>
                   <p className="article-price">{formatPrice(post.price_cents)}</p>
                   <p>{post.excerpt || post.content.slice(0, 120)}</p>

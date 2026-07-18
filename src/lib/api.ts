@@ -9,9 +9,21 @@ export async function apiJson<T>(input: RequestInfo | URL, init: RequestInit = {
   })
 
   const text = await response.text()
-  const data = text ? JSON.parse(text) : null
+  let data: any = null
+
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch {
+      data = text
+    }
+  }
 
   if (!response.ok) {
+    if (typeof data === 'string') {
+      throw new Error(data || response.statusText || 'Request failed')
+    }
+
     throw new Error(data?.error || response.statusText || 'Request failed')
   }
 

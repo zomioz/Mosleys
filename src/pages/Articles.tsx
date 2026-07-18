@@ -17,7 +17,7 @@ type PostSummary = {
 function formatPrice(priceCents: number) {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'USD',
   }).format(priceCents / 100)
 }
 

@@ -39,5 +39,11 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
     httpMetadata: { contentType: file.type },
   })
 
+  await env.DB.prepare(
+    'INSERT INTO media (post_id, r2_key, public_url) VALUES (?, ?, ?)',
+  )
+    .bind(null, key, `/api/media/${key}`)
+    .run()
+
   return json({ ok: true, key, src: `/api/media/${key}` })
 }

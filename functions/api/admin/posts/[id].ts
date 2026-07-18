@@ -15,6 +15,33 @@ export async function onRequestDelete({ request, env, params }: { request: Reque
     return json({ error: 'Invalid post id' }, 400)
   }
 
+  const existing = await env.DB.prepare(
+    'SELECT cover_image_key, gallery_image_keys FROM posts WHERE id = ? LIMIT 1',
+  )
+    .bind(id)
+    .first<{ cover_image_key: string | null; gallery_image_keys: string | null }>()
+
+  if (!existing) {
+    return json({ ok: true })
+  }
+
+  const imageKeys = parseGalleryImageKeys(existing.gallery_image_keys)
+  if (existing.cover_image_key) {
+    imageKeys.push(existing.cover_image_key)
+  }
+
+  const uniqueImageKeys = Array.from(new Set(imageKeys.filter(Boolean)))
+
+  if (uniqueImageKeys.length > 0) {
+    const placeholders = uniqueImageKeys.map(() => '?').join(', ')
+
+    await env.DB.prepare(`DELETE FROM media WHERE r2_key IN (${placeholders})`)
+      .bind(...uniqueImageKeys)
+      .run()
+
+    await Promise.all(uniqueImageKeys.map((key) => env.MEDIA_BUCKET.delete(key).catch(() => null)))
+  }
+
   await env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run()
 
   return json({ ok: true })
@@ -45,7 +72,7 @@ export async function onRequestPut({ request, env, params }: { request: Request;
   const content = String(payload.content || '').trim()
   const coverImageKey = String(payload.coverImageKey || '').trim() || null
   const galleryImageKeys = parseGalleryImageKeys(payload.galleryImageKeys)
-  const status = String(payload.status || 'draft').trim() === 'published' ? 'published' : 'draft'
+  const status = 'published'
   const articleKey = String(payload.articleKey || '').trim()
 
   if (!title || !content) {

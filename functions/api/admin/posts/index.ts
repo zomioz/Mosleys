@@ -38,7 +38,7 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
   const priceCents = Number.isFinite(Number(payload.priceCents)) ? Math.max(0, Math.round(Number(payload.priceCents))) : 0
   const content = String(payload.content || '').trim()
   const excerpt = String(payload.excerpt || '').trim()
-  const status = String(payload.status || 'draft').trim() === 'published' ? 'published' : 'draft'
+  const status = 'published'
   const coverImageKey = String(payload.coverImageKey || '').trim() || null
   const articleKey = String(payload.articleKey || '').trim() || makeArticleKey()
   const galleryImageKeys = parseGalleryImageKeys(payload.galleryImageKeys)
