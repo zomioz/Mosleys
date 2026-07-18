@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom'
+import logoSrc from '../assets/hero.png'
 
 function Accueil() {
   return (
     <section className="page page-home">
       <div className="hero-card">
-        <span className="eyebrow">Accueil</span>
-        <h1>Mon site simple</h1>
+        <div className="home-logo-wrap" aria-hidden="true">
+          <img className="home-logo" src={logoSrc} alt="Mosleys AUTO" />
+        </div>
+        <span className="eyebrow">Mosleys AUTO</span>
+        <h1>Un projet de Roy et Timothy Wheeler</h1>
         <p>
-          Une base claire pour présenter le site. Les articles sont maintenant sur une page dédiée.
+          Ébauche du site catalogue de Mosleys AUTO.
         </p>
         <div className="hero-actions">
           <Link className="button button-primary" to="/articles">
@@ -16,10 +20,11 @@ function Accueil() {
         </div>
       </div>
 
-      <section className="panel">
-        <h2>Structure du site</h2>
+      <section className="panel accent-panel">
+        <span className="eyebrow">Très bientôt</span>
+        <h2>Les prochaines sections du catalogue</h2>
         <p>
-          L&apos;accueil sert d&apos;entrée simple, la page articles contient la liste publique, et l&apos;admin reste caché.
+          Catalogue occasion, catalogue location, liste des véhicules en fourrière.
         </p>
       </section>
     </section>

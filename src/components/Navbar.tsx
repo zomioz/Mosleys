@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import logoSrc from '../assets/hero.png'
 
 const links = [
   { to: '/', label: 'Accueil' },
@@ -50,10 +51,12 @@ function Navbar() {
   return (
     <header className="navbar">
       <NavLink className="brand" to="/">
-        <span className="brand-mark">M</span>
+        <span className="brand-logo-frame" aria-hidden="true">
+          <img className="brand-logo" src={logoSrc} alt="Mosleys AUTO" />
+        </span>
         <span className="brand-text">
-          <strong>Mosleys</strong>
-          <small>Cloudflare Pages content base</small>
+          <strong>Mosleys AUTO</strong>
+          <small>Catalogue automobile</small>
         </span>
       </NavLink>
 

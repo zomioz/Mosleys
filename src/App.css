@@ -21,8 +21,8 @@
   gap: 20px;
   padding: 20px clamp(16px, 3vw, 40px);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -36,16 +36,25 @@
   color: inherit;
 }
 
-.brand-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+.brand-mark,
+.brand-logo-frame {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--accent), #ffb86b);
-  color: #fff;
+  background: linear-gradient(145deg, #101010, #1a1a1a);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
   font-weight: 700;
   box-shadow: var(--shadow);
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: screen;
 }
 
 .brand-text {
@@ -55,13 +64,13 @@
 }
 
 .brand-text strong {
-  font-size: 1rem;
+  font-size: 1.06rem;
   color: var(--text-h);
 }
 
 .brand-text small {
   font-size: 0.82rem;
-  color: var(--text);
+  color: color-mix(in srgb, var(--text) 86%, var(--accent));
 }
 
 .nav-links {
@@ -76,8 +85,8 @@
   color: var(--text-h);
   padding: 10px 16px;
   border-radius: 999px;
-  border: 1px solid transparent;
-  background: transparent;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -91,8 +100,8 @@
 
 .nav-link-active {
   border-color: var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: linear-gradient(145deg, rgba(243, 195, 22, 0.18), rgba(243, 195, 22, 0.1));
+  color: #f8d149;
 }
 
 .page {
@@ -104,7 +113,7 @@
 .panel {
   border: 1px solid var(--border);
   border-radius: 28px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, transparent), var(--bg));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 78%, #101010), color-mix(in srgb, var(--bg) 90%, #090909));
   box-shadow: var(--shadow);
 }
 
@@ -121,7 +130,7 @@
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%);
   pointer-events: none;
 }
 
@@ -132,8 +141,8 @@
   width: fit-content;
   padding: 7px 12px;
   border-radius: 999px;
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: #ffd84e;
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -177,15 +186,17 @@
 }
 
 .button-primary {
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent), #ff7b54);
+  color: #101010;
+  font-weight: 800;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #ffd84e, var(--accent));
   box-shadow: var(--shadow);
 }
 
 .button-secondary {
   color: var(--text-h);
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 88%, var(--social-bg));
+  background: color-mix(in srgb, var(--bg) 88%, #141414);
 }
 
 .button:disabled,
@@ -218,7 +229,7 @@
 }
 
 .accent-panel {
-  background: linear-gradient(180deg, var(--accent-bg), color-mix(in srgb, var(--bg) 90%, transparent));
+  background: linear-gradient(180deg, rgba(243, 195, 22, 0.12), color-mix(in srgb, var(--bg) 86%, #101010));
 }
 
 .panel h2 {
@@ -259,7 +270,7 @@
   border: 1px solid var(--border);
   border-radius: 22px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  background: color-mix(in srgb, var(--bg) 88%, #101010);
 }
 
 .post-card-content,
@@ -360,7 +371,7 @@
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 92%, var(--social-bg));
+  background: color-mix(in srgb, var(--bg) 84%, #111111);
   color: var(--text-h);
 }
 
@@ -376,7 +387,7 @@
 }
 
 .form-error {
-  color: #d11a2a;
+  color: #ff6b6b;
   font-weight: 600;
 }
 
@@ -456,7 +467,7 @@
   border: 1px solid var(--border);
   border-radius: 24px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  background: color-mix(in srgb, var(--bg) 86%, #101010);
   cursor: pointer;
   box-shadow: var(--shadow);
   align-content: start;
@@ -526,8 +537,8 @@
   height: 42px;
   border: 0;
   border-radius: 999px;
-  background: rgba(18, 15, 24, 0.55);
-  color: #fff;
+  background: rgba(12, 12, 12, 0.72);
+  color: #ffd84e;
   font-size: 1.8rem;
   line-height: 1;
   display: grid;
@@ -560,8 +571,8 @@
   bottom: 14px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(18, 15, 24, 0.6);
-  color: #fff;
+  background: rgba(12, 12, 12, 0.72);
+  color: #ffd84e;
   font-size: 0.82rem;
 }
 
@@ -619,7 +630,7 @@
 .article-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 15, 24, 0.52);
+  background: rgba(5, 5, 5, 0.62);
   backdrop-filter: blur(3px);
   z-index: 40;
   display: grid;
@@ -647,9 +658,28 @@
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
-  background: rgba(18, 15, 24, 0.6);
-  color: #fff;
+  background: rgba(12, 12, 12, 0.84);
+  color: #ffd84e;
   z-index: 2;
+}
+
+.home-logo-wrap {
+  width: min(220px, 52vw);
+  aspect-ratio: 1 / 1;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: radial-gradient(circle at 50% 40%, rgba(243, 195, 22, 0.12), rgba(10, 10, 10, 0.5) 70%);
+  padding: 16px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+}
+
+.home-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: screen;
 }
 
 .upload-previews {
