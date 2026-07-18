@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 
 const links = [
   { to: '/', label: 'Accueil' },
@@ -6,6 +7,46 @@ const links = [
 ]
 
 function Navbar() {
+  const location = useLocation()
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    async function checkAdminSession() {
+      try {
+        const response = await fetch('/api/admin/me', { credentials: 'include' })
+
+        if (!active) {
+          return
+        }
+
+        if (!response.ok) {
+          setIsAdminAuthenticated(false)
+          return
+        }
+
+        const data = (await response.json()) as { authenticated?: boolean }
+        setIsAdminAuthenticated(Boolean(data.authenticated))
+      } catch {
+        if (active) {
+          setIsAdminAuthenticated(false)
+        }
+      }
+    }
+
+    checkAdminSession()
+
+    return () => {
+      active = false
+    }
+  }, [location.pathname])
+
+  const visibleLinks = useMemo(
+    () => (isAdminAuthenticated ? [...links, { to: '/admin', label: 'Admin' }] : links),
+    [isAdminAuthenticated],
+  )
+
   return (
     <header className="navbar">
       <NavLink className="brand" to="/">
@@ -17,7 +58,7 @@ function Navbar() {
       </NavLink>
 
       <nav className="nav-links" aria-label="Navigation principale">
-        {links.map((link) => (
+        {visibleLinks.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
