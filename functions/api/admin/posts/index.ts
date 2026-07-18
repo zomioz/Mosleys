@@ -62,10 +62,21 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
     .bind(title, slug, articleKey, priceCents, excerpt, content, normalizedCover, JSON.stringify(normalizedGallery), status)
     .run()
 
+  const postId = result.meta.last_row_id
+  const imageKeys = Array.from(new Set([normalizedCover, ...normalizedGallery].filter((key): key is string => Boolean(key))))
+
+  if (imageKeys.length > 0) {
+    const placeholders = imageKeys.map(() => '?').join(', ')
+
+    await env.DB.prepare(`UPDATE media SET post_id = ? WHERE article_key = ? OR r2_key IN (${placeholders})`)
+      .bind(postId, articleKey, ...imageKeys)
+      .run()
+  }
+
   return json({
     ok: true,
     post: {
-      id: result.meta.last_row_id,
+      id: postId,
       title,
       slug,
       article_key: articleKey,

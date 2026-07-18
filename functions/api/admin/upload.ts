@@ -23,6 +23,7 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
   }
 
   const file = formData.get('file')
+  const articleKey = String(formData.get('articleKey') || '').trim() || null
 
   if (!(file instanceof File)) {
     return json({ error: 'Missing file' }, 400)
@@ -40,9 +41,9 @@ export async function onRequestPost({ request, env }: { request: Request; env: a
   })
 
   await env.DB.prepare(
-    'INSERT INTO media (post_id, r2_key, public_url) VALUES (?, ?, ?)',
+    'INSERT INTO media (post_id, article_key, r2_key, public_url) VALUES (?, ?, ?, ?)',
   )
-    .bind(null, key, `/api/media/${key}`)
+    .bind(null, articleKey, key, `/api/media/${key}`)
     .run()
 
   return json({ ok: true, key, src: `/api/media/${key}` })

@@ -269,6 +269,27 @@
   gap: 10px;
 }
 
+.admin-post-media-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.admin-post-media-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.admin-post-media-empty {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
 .post-card h3,
 .admin-post-content h3 {
   margin: 0;

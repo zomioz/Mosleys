@@ -24,6 +24,7 @@ CREATE TABLE posts (
 CREATE TABLE media (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   post_id INTEGER,
+  article_key TEXT,
   r2_key TEXT NOT NULL UNIQUE,
   public_url TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -32,3 +33,4 @@ CREATE TABLE media (
 
 CREATE INDEX idx_posts_status_created_at ON posts(status, created_at DESC);
 CREATE INDEX idx_posts_slug ON posts(slug);
+CREATE INDEX idx_media_article_key ON media(article_key);

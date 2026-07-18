@@ -16,10 +16,10 @@ export async function onRequestDelete({ request, env, params }: { request: Reque
   }
 
   const existing = await env.DB.prepare(
-    'SELECT cover_image_key, gallery_image_keys FROM posts WHERE id = ? LIMIT 1',
+    'SELECT article_key, cover_image_key, gallery_image_keys FROM posts WHERE id = ? LIMIT 1',
   )
     .bind(id)
-    .first<{ cover_image_key: string | null; gallery_image_keys: string | null }>()
+    .first<{ article_key: string; cover_image_key: string | null; gallery_image_keys: string | null }>()
 
   if (!existing) {
     return json({ ok: true })
@@ -32,14 +32,18 @@ export async function onRequestDelete({ request, env, params }: { request: Reque
 
   const uniqueImageKeys = Array.from(new Set(imageKeys.filter(Boolean)))
 
-  if (uniqueImageKeys.length > 0) {
-    const placeholders = uniqueImageKeys.map(() => '?').join(', ')
+  const mediaRows = await env.DB.prepare('SELECT r2_key FROM media WHERE post_id = ? OR article_key = ?').bind(id, existing.article_key).all<{ r2_key: string }>()
+  const linkedMediaKeys = mediaRows.results.map((row) => row.r2_key)
+  const allKeysToRemove = Array.from(new Set([...uniqueImageKeys, ...linkedMediaKeys]))
 
-    await env.DB.prepare(`DELETE FROM media WHERE r2_key IN (${placeholders})`)
-      .bind(...uniqueImageKeys)
+  if (allKeysToRemove.length > 0) {
+    const placeholders = allKeysToRemove.map(() => '?').join(', ')
+
+    await env.DB.prepare(`DELETE FROM media WHERE post_id = ? OR article_key = ? OR r2_key IN (${placeholders})`)
+      .bind(id, existing.article_key, ...allKeysToRemove)
       .run()
 
-    await Promise.all(uniqueImageKeys.map((key) => env.MEDIA_BUCKET.delete(key).catch(() => null)))
+    await Promise.all(allKeysToRemove.map((key) => env.MEDIA_BUCKET.delete(key).catch(() => null)))
   }
 
   await env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run()
@@ -101,6 +105,16 @@ export async function onRequestPut({ request, env, params }: { request: Request;
   )
     .bind(title, priceCents, excerpt, content, normalizedCover, JSON.stringify(normalizedGallery), articleKey || existing.article_key, status, id)
     .run()
+
+  const imageKeys = Array.from(new Set([normalizedCover, ...normalizedGallery].filter((key): key is string => Boolean(key))))
+
+  if (imageKeys.length > 0) {
+    const placeholders = imageKeys.map(() => '?').join(', ')
+
+    await env.DB.prepare(`UPDATE media SET post_id = ?, article_key = ? WHERE r2_key IN (${placeholders})`)
+      .bind(id, articleKey || existing.article_key, ...imageKeys)
+      .run()
+  }
 
   return json({ ok: true })
 }

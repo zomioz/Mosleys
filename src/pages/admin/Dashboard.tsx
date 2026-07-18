@@ -13,6 +13,12 @@ function formatPrice(priceCents: number) {
   }).format(priceCents / 100)
 }
 
+function getLinkedImageKeys(post: Post) {
+  const keys = [post.cover_image_key, ...post.gallery_image_keys]
+
+  return Array.from(new Set(keys.filter((key): key is string => Boolean(key))))
+}
+
 type User = {
   id: number
   email: string
@@ -167,6 +173,7 @@ function Dashboard() {
       for (const file of filesToUpload) {
         const formData = new FormData()
         formData.append('file', file)
+        formData.append('articleKey', form.articleKey)
 
         const result = await apiJson<{ key: string; src: string }>('/api/admin/upload', {
           method: 'POST',
@@ -356,13 +363,9 @@ function Dashboard() {
               <textarea value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} rows={10} required />
             </label>
 
-            <label className="form-field">
-              <span>Image liée</span>
-              <input value={form.coverImageKey} onChange={(event) => setForm({ ...form, coverImageKey: event.target.value })} placeholder="Clé R2" />
-            </label>
-
             <label className="form-field form-field-full upload-field">
               <span>Uploader jusqu&apos;à 3 images</span>
+              <small>Les images sont automatiquement liées à cet article via sa clé technique.</small>
               <input type="file" accept="image/*" multiple onChange={handleUpload} />
               {uploading ? <p>Upload en cours...</p> : null}
               {previewSrcs.length > 0 ? (
@@ -403,6 +406,10 @@ function Dashboard() {
           <div className="admin-posts-list">
             {posts.length === 0 ? <p>Aucun post pour le moment.</p> : null}
             {posts.map((post) => (
+              (() => {
+                const linkedImageKeys = getLinkedImageKeys(post)
+
+                return (
               <article key={post.id} className="admin-post-item">
                 {post.cover_image_key ? <img className="admin-post-thumb" src={`/api/media/${post.cover_image_key}`} alt={post.title} /> : null}
                 <div className="admin-post-content">
@@ -410,6 +417,15 @@ function Dashboard() {
                   <h3>{post.title}</h3>
                   <p className="article-price">{formatPrice(post.price_cents)}</p>
                   <p>{post.excerpt || post.content.slice(0, 120)}</p>
+                  <div className="admin-post-media-strip" aria-label="Images liées">
+                    {linkedImageKeys.length > 0 ? (
+                      linkedImageKeys.map((key) => (
+                        <img key={key} className="admin-post-media-thumb" src={`/api/media/${key}`} alt={post.title} />
+                      ))
+                    ) : (
+                      <p className="admin-post-media-empty">Aucune image liée</p>
+                    )}
+                  </div>
                 </div>
                 <button className="button button-secondary delete-button" type="button" onClick={() => handleEdit(post)}>
                   Modifier
@@ -418,6 +434,8 @@ function Dashboard() {
                   Supprimer
                 </button>
               </article>
+                )
+              })()
             ))}
           </div>
         </section>
