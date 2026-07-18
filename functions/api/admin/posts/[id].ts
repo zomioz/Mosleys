@@ -2,6 +2,34 @@ import { json } from '../../../lib/http'
 import { parseGalleryImageKeys } from '../../../lib/posts'
 import { requireAdmin } from '../../../lib/auth'
 
+export async function onRequestPost({ request, env, params }: { request: Request; env: any; params: any }) {
+  try {
+    const admin = await requireAdmin(request, env)
+
+    if (!admin) {
+      return json({ error: 'Unauthorized' }, 401)
+    }
+
+    const id = Number(params.id)
+
+    if (!Number.isInteger(id)) {
+      return json({ error: 'Invalid post id' }, 400)
+    }
+
+    await env.DB.prepare(
+      `UPDATE posts
+       SET updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+      .bind(id)
+      .run()
+
+    return json({ ok: true })
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : 'Up post failed' }, 500)
+  }
+}
+
 export async function onRequestDelete({ request, env, params }: { request: Request; env: any; params: any }) {
   try {
     const admin = await requireAdmin(request, env)

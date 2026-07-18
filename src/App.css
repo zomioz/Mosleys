@@ -491,7 +491,7 @@
 .article-media {
   position: relative;
   overflow: hidden;
-  height: 150px;
+  height: 165px;
   background: var(--social-bg);
 }
 
@@ -596,6 +596,16 @@
   color: var(--text-h);
 }
 
+.article-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.article-admin-actions .button {
+  padding: 10px 14px;
+}
+
 .article-snippet {
   margin: 0;
   font-size: 0.95rem;
@@ -678,7 +688,7 @@
   }
 
   .article-media {
-    height: 130px;
+    height: 145px;
   }
 
   .article-media-detail {

@@ -6,7 +6,7 @@ export async function onRequestGet({ env }: { env: any }) {
     `SELECT id, title, slug, article_key, price_cents, excerpt, content, cover_image_key, gallery_image_keys, created_at, updated_at
      FROM posts
      WHERE status = ?
-     ORDER BY created_at DESC`,
+     ORDER BY updated_at DESC`,
   )
     .bind('published')
     .all()

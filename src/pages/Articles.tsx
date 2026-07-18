@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { apiJson } from '../lib/api'
 
 type PostSummary = {
   id: number
@@ -12,6 +13,7 @@ type PostSummary = {
   cover_image_key: string | null
   gallery_image_keys: string[]
   created_at: string
+  updated_at: string
 }
 
 function formatPrice(priceCents: number) {
@@ -25,10 +27,47 @@ function Articles() {
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [imageIndexes, setImageIndexes] = useState<Record<number, number>>({})
+  const [isEditing, setIsEditing] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: '',
+    slug: '',
+    price: '',
+    excerpt: '',
+    content: '',
+  })
 
   const expandedPost = useMemo(() => posts.find((post) => post.id === expandedId) || null, [expandedId, posts])
+
+  async function loadPosts() {
+    const response = await fetch('/api/posts', { credentials: 'include' })
+
+    if (!response.ok) {
+      throw new Error('Impossible de charger les articles')
+    }
+
+    const data = (await response.json()) as { posts: PostSummary[] }
+    setPosts(data.posts || [])
+  }
+
+  async function loadAdminState() {
+    try {
+      const response = await fetch('/api/admin/me', { credentials: 'include' })
+
+      if (!response.ok) {
+        setIsAdmin(false)
+        return
+      }
+
+      const data = (await response.json()) as { authenticated?: boolean }
+      setIsAdmin(Boolean(data.authenticated))
+    } catch {
+      setIsAdmin(false)
+    }
+  }
 
   function getImages(post: PostSummary) {
     const images = post.gallery_image_keys.length > 0 ? post.gallery_image_keys : post.cover_image_key ? [post.cover_image_key] : []
@@ -97,18 +136,11 @@ function Articles() {
   useEffect(() => {
     let active = true
 
-    async function loadPosts() {
+    async function bootstrap() {
       try {
-        const response = await fetch('/api/posts', { credentials: 'include' })
-
-        if (!response.ok) {
-          throw new Error('Impossible de charger les articles')
-        }
-
-        const data = (await response.json()) as { posts: PostSummary[] }
-
+        await Promise.all([loadPosts(), loadAdminState()])
         if (active) {
-          setPosts(data.posts || [])
+          setError('')
         }
       } catch (err) {
         if (active) {
@@ -121,23 +153,94 @@ function Articles() {
       }
     }
 
-    loadPosts()
+    bootstrap()
 
     return () => {
       active = false
     }
   }, [])
 
+  function startEdit(post: PostSummary) {
+    setIsEditing(true)
+    setEditForm({
+      title: post.title,
+      slug: post.slug,
+      price: String(post.price_cents / 100),
+      excerpt: post.excerpt,
+      content: post.content,
+    })
+  }
+
+  function openEdit(post: PostSummary) {
+    setExpandedId(post.id)
+    startEdit(post)
+  }
+
+  function closeModal() {
+    setExpandedId(null)
+    setIsEditing(false)
+  }
+
+  async function handleAdminDelete(post: PostSummary) {
+    if (!confirm(`Supprimer l'annonce "${post.title}" ?`)) {
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await apiJson(`/api/admin/posts/${post.id}`, { method: 'DELETE' })
+      await loadPosts()
+      closeModal()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Suppression impossible')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleAdminUp(post: PostSummary) {
+    setSubmitting(true)
+    try {
+      await apiJson(`/api/admin/posts/${post.id}`, { method: 'POST' })
+      await loadPosts()
+      setExpandedId(post.id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Remontée impossible')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleAdminSave(post: PostSummary) {
+    setSubmitting(true)
+    try {
+      const priceCents = Math.max(0, Math.round(Number(String(editForm.price).replace(',', '.')) * 100) || 0)
+
+      await apiJson(`/api/admin/posts/${post.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          title: editForm.title,
+          slug: editForm.slug,
+          excerpt: editForm.excerpt,
+          content: editForm.content,
+          priceCents,
+          coverImageKey: post.cover_image_key,
+          galleryImageKeys: post.gallery_image_keys,
+          articleKey: post.article_key,
+        }),
+      })
+
+      await loadPosts()
+      setIsEditing(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Modification impossible')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <section className="page page-articles">
-      <div className="hero-card">
-        <span className="eyebrow">Articles</span>
-        <h1>Les articles</h1>
-        <p>
-          Chaque article est présenté dans une carte indépendante. Le clic ouvre une vue agrandie sur la même page.
-        </p>
-      </div>
-
       <section className="panel">
         <div className="section-header">
           <div>
@@ -167,17 +270,54 @@ function Articles() {
               {renderCarousel(post, 'card')}
 
               <div className="article-card-content">
-                <p className="post-meta">{new Date(post.created_at).toLocaleDateString('fr-FR')}</p>
+                {isAdmin ? <p className="post-meta">{new Date(post.updated_at || post.created_at).toLocaleDateString('fr-FR')}</p> : null}
                 <h3>{post.title}</h3>
                 <p className="article-price">{formatPrice(post.price_cents)}</p>
                 <p className="article-snippet">{post.excerpt || post.content.slice(0, 110)}</p>
                 <div className="article-card-actions">
                   <button className="button button-secondary" type="button">
-                    Ouvrir
+                    Afficher
                   </button>
                   <Link className="button button-secondary" to={`/post/${post.slug}`} onClick={(event) => event.stopPropagation()}>
-                    Page dédiée
+                    Voir le lien de l'annonce
                   </Link>
+                  {isAdmin ? (
+                    <>
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        disabled={submitting}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleAdminUp(post)
+                        }}
+                      >
+                        UP
+                      </button>
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        disabled={submitting}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          openEdit(post)
+                        }}
+                      >
+                        Modifier l'annonce
+                      </button>
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        disabled={submitting}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleAdminDelete(post)
+                        }}
+                      >
+                        Supprimer l'annonce
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </article>
@@ -186,9 +326,9 @@ function Articles() {
       </section>
 
       {expandedPost ? (
-        <div className="article-modal-backdrop" role="dialog" aria-modal="true" aria-label={`Détail ${expandedPost.title}`} onClick={() => setExpandedId(null)}>
+        <div className="article-modal-backdrop" role="dialog" aria-modal="true" aria-label={`Détail ${expandedPost.title}`} onClick={closeModal}>
           <article className="panel article-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="article-modal-close" type="button" aria-label="Fermer" onClick={() => setExpandedId(null)}>
+            <button className="article-modal-close" type="button" aria-label="Fermer" onClick={closeModal}>
               ×
             </button>
 
@@ -198,17 +338,60 @@ function Articles() {
               <div className="article-detail-header">
                 <div>
                   <span className="eyebrow">Vue agrandie</span>
-                  <h2>{expandedPost.title}</h2>
+                  <h2>{isEditing ? 'Modifier l\'annonce' : expandedPost.title}</h2>
                 </div>
               </div>
 
-              <p className="article-price">{formatPrice(expandedPost.price_cents)}</p>
-              <p className="article-excerpt">{expandedPost.excerpt}</p>
-              <div className="article-content">
-                {expandedPost.content.split('\n').map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
+              {isAdmin ? <p className="post-meta">{new Date(expandedPost.updated_at || expandedPost.created_at).toLocaleDateString('fr-FR')}</p> : null}
+
+              {isEditing ? (
+                <form
+                  className="form-grid"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    void handleAdminSave(expandedPost)
+                  }}
+                >
+                  <label className="form-field">
+                    <span>Titre</span>
+                    <input value={editForm.title} onChange={(event) => setEditForm({ ...editForm, title: event.target.value })} required />
+                  </label>
+                  <label className="form-field">
+                    <span>Slug</span>
+                    <input value={editForm.slug} onChange={(event) => setEditForm({ ...editForm, slug: event.target.value })} />
+                  </label>
+                  <label className="form-field">
+                    <span>Prix en dollars</span>
+                    <input value={editForm.price} onChange={(event) => setEditForm({ ...editForm, price: event.target.value })} type="number" min="0" step="0.01" />
+                  </label>
+                  <label className="form-field form-field-full">
+                    <span>Extrait</span>
+                    <textarea rows={3} value={editForm.excerpt} onChange={(event) => setEditForm({ ...editForm, excerpt: event.target.value })} />
+                  </label>
+                  <label className="form-field form-field-full">
+                    <span>Contenu</span>
+                    <textarea rows={8} value={editForm.content} onChange={(event) => setEditForm({ ...editForm, content: event.target.value })} required />
+                  </label>
+                  <div className="article-admin-actions">
+                    <button className="button button-primary" type="submit" disabled={submitting}>
+                      {submitting ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                    <button className="button button-secondary" type="button" disabled={submitting} onClick={() => setIsEditing(false)}>
+                      Annuler
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <p className="article-price">{formatPrice(expandedPost.price_cents)}</p>
+                  <p className="article-excerpt">{expandedPost.excerpt}</p>
+                  <div className="article-content">
+                    {expandedPost.content.split('\n').map((paragraph, index) => (
+                      <p key={index}>{paragraph}</p>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </article>
         </div>
