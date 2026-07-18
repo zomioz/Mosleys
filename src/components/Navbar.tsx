@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import logoSrc from '../assets/hero.png'
 
+const transparentLogoSrc = '/mosleys-logo-transparent.png'
+
 const links = [
   { to: '/', label: 'Accueil' },
   { to: '/articles', label: 'Articles' },
@@ -52,7 +54,14 @@ function Navbar() {
     <header className="navbar">
       <NavLink className="brand" to="/">
         <span className="brand-logo-frame" aria-hidden="true">
-          <img className="brand-logo" src={logoSrc} alt="Mosleys AUTO" />
+          <img
+            className="brand-logo"
+            src={transparentLogoSrc}
+            alt="Mosleys AUTO"
+            onError={(event) => {
+              event.currentTarget.src = logoSrc
+            }}
+          />
         </span>
         <span className="brand-text">
           <strong>Mosleys AUTO</strong>

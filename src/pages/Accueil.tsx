@@ -1,12 +1,21 @@
 import { Link } from 'react-router-dom'
 import logoSrc from '../assets/hero.png'
 
+const transparentLogoSrc = '/mosleys-logo-transparent.png'
+
 function Accueil() {
   return (
     <section className="page page-home">
       <div className="hero-card">
         <div className="home-logo-wrap" aria-hidden="true">
-          <img className="home-logo" src={logoSrc} alt="Mosleys AUTO" />
+          <img
+            className="home-logo"
+            src={transparentLogoSrc}
+            alt="Mosleys AUTO"
+            onError={(event) => {
+              event.currentTarget.src = logoSrc
+            }}
+          />
         </div>
         <span className="eyebrow">Mosleys AUTO</span>
         <h1>Un projet de Roy et Timothy Wheeler</h1>
