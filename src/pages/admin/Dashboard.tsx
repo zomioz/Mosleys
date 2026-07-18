@@ -2,6 +2,17 @@ import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from '
 import { Link, useNavigate } from 'react-router-dom'
 import { apiJson } from '../../lib/api'
 
+function createArticleKey() {
+  return `art_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
+}
+
+function formatPrice(priceCents: number) {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(priceCents / 100)
+}
+
 type User = {
   id: number
   email: string
@@ -12,9 +23,12 @@ type Post = {
   id: number
   title: string
   slug: string
+  article_key: string
+  price_cents: number
   excerpt: string
   content: string
   cover_image_key: string | null
+  gallery_image_keys: string[]
   status: 'draft' | 'published'
   created_at: string
   updated_at: string
@@ -28,15 +42,18 @@ function Dashboard() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
-  const [previewSrc, setPreviewSrc] = useState('')
+  const [previewSrcs, setPreviewSrcs] = useState<string[]>([])
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({
     title: '',
     slug: '',
+    price: '',
     excerpt: '',
     content: '',
     status: 'draft' as 'draft' | 'published',
     coverImageKey: '',
+    galleryImageKeys: [] as string[],
+    articleKey: createArticleKey(),
   })
 
   const publishedCount = useMemo(
@@ -59,12 +76,15 @@ function Dashboard() {
     setForm({
       title: '',
       slug: '',
+      price: '',
       excerpt: '',
       content: '',
       status: 'draft',
       coverImageKey: '',
+      galleryImageKeys: [],
+      articleKey: createArticleKey(),
     })
-    setPreviewSrc('')
+    setPreviewSrcs([])
   }
 
   useEffect(() => {
@@ -126,26 +146,49 @@ function Dashboard() {
   }
 
   async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
+    const files = Array.from(event.target.files || [])
 
-    if (!file) {
+    if (files.length === 0) {
       return
     }
+
+    if (form.galleryImageKeys.length >= 3) {
+      setError('Tu peux ajouter au maximum 3 images par article')
+      event.target.value = ''
+      return
+    }
+
+    const filesToUpload = files.slice(0, 3 - form.galleryImageKeys.length)
 
     setUploading(true)
     setError('')
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      const uploads: Array<{ key: string; src: string }> = []
 
-      const result = await apiJson<{ key: string; src: string }>('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
+      for (const file of filesToUpload) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const result = await apiJson<{ key: string; src: string }>('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        uploads.push(result)
+      }
+
+      setForm((current) => {
+        const galleryImageKeys = [...current.galleryImageKeys, ...uploads.map((upload) => upload.key)].slice(0, 3)
+
+        return {
+          ...current,
+          coverImageKey: current.coverImageKey || galleryImageKeys[0] || '',
+          galleryImageKeys,
+        }
       })
 
-      setForm((current) => ({ ...current, coverImageKey: result.key }))
-      setPreviewSrc(result.src)
+      setPreviewSrcs((current) => [...current, ...uploads.map((upload) => upload.src)].slice(0, 3))
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Upload impossible')
     } finally {
@@ -160,15 +203,23 @@ function Dashboard() {
     setError('')
 
     try {
+      const priceCents = Math.max(0, Math.round(Number(String(form.price).replace(',', '.')) * 100) || 0)
+
       if (editingId) {
         await apiJson(`/api/admin/posts/${editingId}`, {
           method: 'PUT',
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            ...form,
+            priceCents,
+          }),
         })
       } else {
         await apiJson('/api/admin/posts', {
           method: 'POST',
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            ...form,
+            priceCents,
+          }),
         })
       }
 
@@ -186,12 +237,28 @@ function Dashboard() {
     setForm({
       title: post.title,
       slug: post.slug,
+      price: String(post.price_cents / 100),
       excerpt: post.excerpt,
       content: post.content,
       status: post.status,
       coverImageKey: post.cover_image_key || '',
+      galleryImageKeys: post.gallery_image_keys.length > 0 ? post.gallery_image_keys : post.cover_image_key ? [post.cover_image_key] : [],
+      articleKey: post.article_key,
     })
-    setPreviewSrc(post.cover_image_key ? `/api/media/${post.cover_image_key}` : '')
+    setPreviewSrcs((post.gallery_image_keys.length > 0 ? post.gallery_image_keys : post.cover_image_key ? [post.cover_image_key] : []).map((key) => `/api/media/${key}`))
+  }
+
+  function removeGalleryImage(index: number) {
+    setForm((current) => {
+      const galleryImageKeys = current.galleryImageKeys.filter((_, currentIndex) => currentIndex !== index)
+
+      return {
+        ...current,
+        galleryImageKeys,
+        coverImageKey: galleryImageKeys[0] || '',
+      }
+    })
+    setPreviewSrcs((current) => current.filter((_, currentIndex) => currentIndex !== index))
   }
 
   async function handleDelete(id: number) {
@@ -268,6 +335,18 @@ function Dashboard() {
               <input value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} />
             </label>
 
+            <label className="form-field">
+              <span>Prix en euros</span>
+              <input
+                value={form.price}
+                onChange={(event) => setForm({ ...form, price: event.target.value })}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="12.00"
+              />
+            </label>
+
             <label className="form-field form-field-full">
               <span>Extrait</span>
               <textarea value={form.excerpt} onChange={(event) => setForm({ ...form, excerpt: event.target.value })} rows={3} />
@@ -292,10 +371,26 @@ function Dashboard() {
             </label>
 
             <label className="form-field form-field-full upload-field">
-              <span>Uploader une image</span>
-              <input type="file" accept="image/*" onChange={handleUpload} />
+              <span>Uploader jusqu&apos;à 3 images</span>
+              <input type="file" accept="image/*" multiple onChange={handleUpload} />
               {uploading ? <p>Upload en cours...</p> : null}
-              {previewSrc ? <img className="upload-preview" src={previewSrc} alt="Aperçu" /> : null}
+              {previewSrcs.length > 0 ? (
+                <div className="upload-previews">
+                  {previewSrcs.map((src, index) => (
+                    <div key={src} className="upload-preview-item">
+                      <img className="upload-preview" src={src} alt={`Aperçu ${index + 1}`} />
+                      <button className="button button-secondary" type="button" onClick={() => removeGalleryImage(index)}>
+                        Retirer
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </label>
+
+            <label className="form-field">
+              <span>Clé technique</span>
+              <input value={form.articleKey} readOnly />
             </label>
 
             {error ? <p className="form-error form-field-full">{error}</p> : null}
@@ -318,12 +413,13 @@ function Dashboard() {
             {posts.length === 0 ? <p>Aucun post pour le moment.</p> : null}
             {posts.map((post) => (
               <article key={post.id} className="admin-post-item">
-                {post.cover_image_key ? (
-                  <img className="admin-post-thumb" src={`/api/media/${post.cover_image_key}`} alt={post.title} />
-                ) : null}
+                {post.cover_image_key ? <img className="admin-post-thumb" src={`/api/media/${post.cover_image_key}`} alt={post.title} /> : null}
                 <div className="admin-post-content">
-                  <p className="post-meta">{post.status} - {post.slug}</p>
+                  <p className="post-meta">
+                    {post.status} - {post.slug}
+                  </p>
                   <h3>{post.title}</h3>
+                  <p className="article-price">{formatPrice(post.price_cents)}</p>
                   <p>{post.excerpt || post.content.slice(0, 120)}</p>
                 </div>
                 <button className="button button-secondary delete-button" type="button" onClick={() => handleEdit(post)}>

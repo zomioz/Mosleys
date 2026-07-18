@@ -25,3 +25,29 @@ export async function makeUniqueSlug(env: any, title: string, explicitSlug?: str
     suffix += 1
   }
 }
+
+export function makeArticleKey() {
+  return `art_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`
+}
+
+export function parseGalleryImageKeys(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map(String).filter(Boolean).slice(0, 3)
+  }
+
+  if (typeof value !== 'string' || !value.trim()) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(value)
+
+    if (Array.isArray(parsed)) {
+      return parsed.map(String).filter(Boolean).slice(0, 3)
+    }
+  } catch {
+    return []
+  }
+
+  return []
+}
