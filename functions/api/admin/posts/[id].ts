@@ -3,52 +3,56 @@ import { parseGalleryImageKeys } from '../../../lib/posts'
 import { requireAdmin } from '../../../lib/auth'
 
 export async function onRequestDelete({ request, env, params }: { request: Request; env: any; params: any }) {
-  const admin = await requireAdmin(request, env)
+  try {
+    const admin = await requireAdmin(request, env)
 
-  if (!admin) {
-    return json({ error: 'Unauthorized' }, 401)
-  }
+    if (!admin) {
+      return json({ error: 'Unauthorized' }, 401)
+    }
 
-  const id = Number(params.id)
+    const id = Number(params.id)
 
-  if (!Number.isInteger(id)) {
-    return json({ error: 'Invalid post id' }, 400)
-  }
+    if (!Number.isInteger(id)) {
+      return json({ error: 'Invalid post id' }, 400)
+    }
 
-  const existing = await env.DB.prepare(
-    'SELECT article_key, cover_image_key, gallery_image_keys FROM posts WHERE id = ? LIMIT 1',
-  )
-    .bind(id)
-    .first<{ article_key: string; cover_image_key: string | null; gallery_image_keys: string | null }>()
+    const existing = await env.DB.prepare(
+      'SELECT article_key, cover_image_key, gallery_image_keys FROM posts WHERE id = ? LIMIT 1',
+    )
+      .bind(id)
+      .first<{ article_key: string; cover_image_key: string | null; gallery_image_keys: string | null }>()
 
-  if (!existing) {
+    if (!existing) {
+      return json({ ok: true })
+    }
+
+    const imageKeys = parseGalleryImageKeys(existing.gallery_image_keys)
+    if (existing.cover_image_key) {
+      imageKeys.push(existing.cover_image_key)
+    }
+
+    const uniqueImageKeys = Array.from(new Set(imageKeys.filter(Boolean)))
+
+    const mediaRows = await env.DB.prepare('SELECT r2_key FROM media WHERE post_id = ? OR article_key = ?').bind(id, existing.article_key).all<{ r2_key: string }>()
+    const linkedMediaKeys = mediaRows.results.map((row) => row.r2_key)
+    const allKeysToRemove = Array.from(new Set([...uniqueImageKeys, ...linkedMediaKeys]))
+
+    if (allKeysToRemove.length > 0) {
+      const placeholders = allKeysToRemove.map(() => '?').join(', ')
+
+      await env.DB.prepare(`DELETE FROM media WHERE post_id = ? OR article_key = ? OR r2_key IN (${placeholders})`)
+        .bind(id, existing.article_key, ...allKeysToRemove)
+        .run()
+
+      await Promise.all(allKeysToRemove.map((key) => env.MEDIA_BUCKET.delete(key).catch(() => null)))
+    }
+
+    await env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run()
+
     return json({ ok: true })
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : 'Delete post failed' }, 500)
   }
-
-  const imageKeys = parseGalleryImageKeys(existing.gallery_image_keys)
-  if (existing.cover_image_key) {
-    imageKeys.push(existing.cover_image_key)
-  }
-
-  const uniqueImageKeys = Array.from(new Set(imageKeys.filter(Boolean)))
-
-  const mediaRows = await env.DB.prepare('SELECT r2_key FROM media WHERE post_id = ? OR article_key = ?').bind(id, existing.article_key).all<{ r2_key: string }>()
-  const linkedMediaKeys = mediaRows.results.map((row) => row.r2_key)
-  const allKeysToRemove = Array.from(new Set([...uniqueImageKeys, ...linkedMediaKeys]))
-
-  if (allKeysToRemove.length > 0) {
-    const placeholders = allKeysToRemove.map(() => '?').join(', ')
-
-    await env.DB.prepare(`DELETE FROM media WHERE post_id = ? OR article_key = ? OR r2_key IN (${placeholders})`)
-      .bind(id, existing.article_key, ...allKeysToRemove)
-      .run()
-
-    await Promise.all(allKeysToRemove.map((key) => env.MEDIA_BUCKET.delete(key).catch(() => null)))
-  }
-
-  await env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run()
-
-  return json({ ok: true })
 }
 
 export async function onRequestPut({ request, env, params }: { request: Request; env: any; params: any }) {
